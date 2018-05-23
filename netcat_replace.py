@@ -87,7 +87,41 @@ def main():
 main()
 
 def client_sender(buffer):
-	client = socket.socket
+	client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+	try:
+
+		client.connect((target, port))
+
+		if len(buffer):
+			client.send(buffer)
+
+		while True:
+			#標的ホストからのデータを待機
+			recv_len = 1
+			response = ""
+
+		while recv_len:
+			data = client.recv(4096)
+			recv_len = len(data)
+			response += data
+
+		if recv_len < 4096:
+			break
+
+		print response,
+		
+		#追加の入力を待機
+		buffer = raw_input
+		buffer += "\n"
+
+		#データの送信
+		client.send(buffer)
+
+	except:
+		print "[*] Exception! Exiting."
+
+		client.close()
 
 
 
