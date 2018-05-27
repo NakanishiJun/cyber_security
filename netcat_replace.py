@@ -204,4 +204,3 @@ def client_handler(client_socket):
 			client_socket.send(response)
 
 
-
