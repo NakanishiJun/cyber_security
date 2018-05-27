@@ -147,11 +147,61 @@ def server_loop():
 
 		client_thread.start()
 
+def client_handler(client_socket):
+	global upload
+	global execute
+	global command
 
+	#ファイルアップロードを指定されているかどうかの確認
+	if len(upload_destination):
+		
+		#全てのデータを読み取り、指定されたファイルにデータを書き込み
+		file_buffer = ""
 
+		#受信データがなくなるまでデータ受信を継続
+		while True:
+			data = client_socket.recv(1024)
 
+			if len(data) == 0:
+				break
 
+			else:
+				file_buffer += data
 
+		try:
+			file_descriptor = open(upload_destination, "wb")
+			file_descriptor.write(file_buffer)
+			file_descriptor.close()
+			client_socket.send(
+				"Successfully saved file to %s\r\n" % upload_destination)
+		except:
+			client_socket.send(
+				"Failed to save file to %s\r\n" % upload_destination)
+	if len(execute):
+		
+		output = run_command(execute)
+
+		client_socket.send(output)
+
+	#コマンドシェルの実行を指定されている場合の処理
+	if command:
+		
+		#プロンプトの表示
+		prompt = "<BHP:#>"
+		client_socket.send(prompt)
+
+		while True:
+
+			#改行(エンターキー)を受け取るまでデータを受信
+			cmd_buffer = " "
+			while "\n" not in cmd_buffer:
+				cmd_buffer += client_socket.recv(1024)
+
+			response = run_command(cmd_buffer)
+			response += prompt
+
+			#コマンドの実行結果を送信
+			client_socket.send(response)
 
 
 
