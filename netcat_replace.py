@@ -23,12 +23,37 @@ def usage():
 	print 
 	print
 
-
 	print "Examples:"
-    print "bhpnet.py -t 192.168.0.1 -p 5555-l -c"    
-    print "bhpnet.py -t 192.168.0.1 -p 5555 -l -u:\\target.exe"
-    print "bhpnet.py -t 192.168.0.1 -p 5555 -l -e \"/*cat /etc/passwd\""
-    print "echo 'ABCDEFGH' |./bhpnet.py -t 192.168.11.12"
+	print "bhpnet.py -t 192.168.0.1 -p 5555-l -c"
+	print "bhpnet.py -t 192.168.0.1 -p 5555 -l -u:\\target.exe"
+	print "bhpnet.py -t 192.168.0.1 -p 5555 -l -e \"/*cat /etc/passwd\""
+	print "echo 'ABCDEFGH' |./bhpnet.py -t 192.168.11.12"
+	sys.exit(0)
+
+def server_loop():
+	global target
+
+	#待機するIPアドレスが指定されていない場合は
+	#全てのインターフェースで接続を待機
+
+	if not len(target):
+		target = "0.0.0.0"
+
+	server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+	server.bind((target, port))
+
+	server.listen(5)
+
+
+	while True:
+		client_socket, addr = server.accept()
+
+		client_thread = threading.Thread(
+			target = client_handler, args = (client_socket,))
+
+		client_thread.start()
+
 def main():
 	global listen
 	global port
@@ -84,8 +109,6 @@ def main():
 	if listen:
 		server_loop()
 
-main()
-
 def client_sender(buffer):
 	client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -106,8 +129,8 @@ def client_sender(buffer):
 			recv_len = len(data)
 			response += data
 
-		if recv_len < 4096:
-			break
+			if recv_len < 4096:
+				break
 
 		print response,
 		
@@ -123,29 +146,6 @@ def client_sender(buffer):
 
 		client.close()
 
-def server_loop():
-	global target
-
-	#待機するIPアドレスが指定されていない場合は
-	#全てのインターフェースで接続を待機
-
-	if not len(target):
-		target = "0.0.0.0"
-
-	server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-	server.bind((target, port))
-
-	server.listen(5)
-
-
-	while True:
-		client_socket, addr = server.accept()
-
-		client_thread = threading.Thread(
-			target = client_handler, args = (client_socket,))
-
-		client_thread.start()
 
 def client_handler(client_socket):
 	global upload
@@ -204,3 +204,5 @@ def client_handler(client_socket):
 			client_socket.send(response)
 
 
+
+main()
