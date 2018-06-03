@@ -123,7 +123,9 @@ def proxy_handler(client_socket, remote_host, remote_port, receive_first):
 			print "[*] No more data. Closing connections."
 
 			break
-
+			
+#16進数のダンプを成形して表示する関数
+#以下のURLのコメント欄から取得したコード(折り返しバイト数の指定に関わるデフォルト引数の値のみ修正)
 #http://code.activestate.com/recipes/142812-hex-dumper/
 def hexdump(src, length=16):
 	result = []
