@@ -1,4 +1,4 @@
-# -*= coding:ytf-8 -*-
+# -*- coding:utf-8 -*-
 
 import sys
 import socket
@@ -31,99 +31,102 @@ def server_loop(local_host, local_port, remote_host, remote_port, receive_first)
 
 		proxy_thread.start()
 
-	def main():
+def main():
 		
-		#コマンドライン引数の解釈
-		if len(sys.argv[1:]) != 5:
-			print "Usage: ./proxy.py [localhost] [localport] [remotehost] [remoteport] [receive_first]"
+	#コマンドライン引数の解釈
+	if len(sys.argv[1:]) != 5:
+		print "Usage: ./proxy.py [localhost] [localport] [remotehost] [remoteport] [receive_first]"
+		print "Example：: ./proxy.py 127.0.0.1 9000 10.12.132.1 9000 True"
+		sys.exit(0)
 
-			print "Example：: ./proxy.py 127.0.0.1 9000 10.12.132.1 9000 True"
-			sys.exit(0)
+	#ローカル側での通信傍受を行なうための設定
+	local_host = sys.argv[1]
+	local_port = int(sys.argv[2])
 
-		#ローカル側での通信傍受を行なうための設定
-		local_host = sys.argv[1]
-		local_port = int(sys.argv[2])
+	#リモート側の設定
+	remote_host = sys.argv[3]
+	remote_port = int(sys.argv[4])
 
-		#リモート側の設定
-		remote_host = sys.argv[3]
-		remote_port = int(sys.argv[4])
+	#リモート側にデータを送る前にデータ受信を行うかどうかの指定
+	receive_first = sys.argv[5]
 
-		#リモート側にデータを送る前にデータ受信を行うかどうかの指定
-		receive_first = sys.argv[5]
+	if "True" in receive_first:
+		receive_first = True
 
-		if "True" in receive_first:
-			receive_first = True
+	else:
+		receive_first = False
 
-		else:
-			receive_first = False
+	#通信待機ソケットの起動
+	server_loop(local_host, local_port, remote_host, remote_port, receive_first)
 
-		#通信待機ソケットの起動
-		server_loop(local_host, local_port, remote_host, remote_port, receive_first)
+def proxy_handler(client_socket, remote_host, remote_port, receive_first):
+	#リモートホストへの接続
+	remote_sicket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	remote_socket.connect((remote_host, remote_port))
 
-	def proxy_handler(client_socket, remote_host, remote_port, receive_first):
-		#リモートホストへの接続
-		remote_sicket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		remote_socket.connect((remote_host, remote_port))
+	#必要ならリモートホストからデータを受信
+	if receive_first:
+		remote_buffer = receive_from(remote.socket)
+		hexdump(remote_buffer)
 
-		#必要ならリモートホストからデータを受信
-		if receive_first:
-			remote_buffer = receive_from(remote.socket)
+		#受信データ処理関数にデータ受け渡し
+		remote_buffer = response_handler(remote_buffer)
+
+		#もしローカル側に対して送るデータがあれば送信
+
+		if len(remote_buffer):
+			print "[<==] Sending %d bytes to localhost." % len(remote_buffer)
+			client_socket.send(remote_buffer)
+
+	#ローカルからのデータ受信、リモートへの送信、ローカルへの送信
+	#の繰り返しを行うループ処理の開始
+	while True:
+			
+		 #ローカルホストからデータ受信
+		local_buffer = receive_from(client_socket)
+
+		if len(local_buffer):
+
+		 	print "[<==] Received %d bytes from localhost." % len(local_buffer)
+
+		 	hexdump(local_buffer)
+
+		 	#送信データ処理関数にデータ受け渡し
+		 	local_buffer = request_handler(local_buffer)
+
+		 	#リモートホストへのデータ送信
+		 	remote_socket.send(local_buffer)
+
+		 	print "[==>] Sent to remote."
+
+		#応答の受信
+		remote_buffer = receive_from(remote_socket)
+
+		if len(remote_buffer):
+			print "[<==] Received %d bytes from remote." % len(remote_buffer)
+				
 			hexdump(remote_buffer)
 
-			#受信データ処理関数にデータ受け渡し
+			#受信でデータ処理関数にデータ受け渡し
 			remote_buffer = response_handler(remote_buffer)
 
-			#もしローカル側に対して送るデータがあれば送信
+			#ローカル側に応答データを送信
+			client_socket.send(remote_buffer)
 
-			if len(remote_buffer):
-				print "[<==] Sending %d bytes to localhost." % len(remote_buffer)
-				client_socket.send(remote_buffer)
+			print "[<==] Sent to localhost."
 
-		#ローカルからのデータ受信、リモートへの送信、ローカルへの送信
-		#の繰り返しを行うループ処理の開始
-		while True:
-			
-			 #ローカルホストからデータ受信
-			local_buffer = receive_from(client_socket)
+		#ローカル側・リモート側双方からデータが来なければ接続を閉じる
+		if not len(local_buffer) or not len(remote_buffer):
+			client_socket.close()
+			remote_socket.close()
 
-			if len(local_buffer):
+			print "[*] No more data. Closing connections."
 
-			 	print "[<==] Received %d bytes from localhost." % len(local_buffer)
+			break
 
-			 	hexdump(local_buffer)
-
-			 	#送信データ処理関数にデータ受け渡し
-			 	local_buffer = request_handler(local_buffer)
-
-			 	#リモートホストへのデータ送信
-			 	remote_socket.send(local_buffer)
-
-			 	print "[==>] Sent to remote."
-
-			#応答の受信
-			remote_buffer = receive_from(remote_socket)
-
-			if len(remote_buffer):
-				print "[<==] Received %d bytes from remote." % len(remote_buffer)
-				
-				hexdump(remote_buffer)
-
-				#受信でデータ処理関数にデータ受け渡し
-				remote_buffer = response_handler(remote_buffer)
-
-				#ローカル側に応答データを送信
-				client_socket.send(remote_buffer)
-
-				print "[<==] Sent to localhost."
-
-			#ローカル側・リモート側双方からデータが来なければ接続を閉じる
-			if not len(local_buffer) or not len(remote_buffer):
-				client_socket.close()
-				remote_socket.close()
-
-				print "[*] No more data. Closing connections."
-
-				break
+def hexdump():
+		
 
 
 	main()
+
