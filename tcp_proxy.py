@@ -123,7 +123,7 @@ def proxy_handler(client_socket, remote_host, remote_port, receive_first):
 			print "[*] No more data. Closing connections."
 
 			break
-			
+
 #16進数のダンプを成形して表示する関数
 #以下のURLのコメント欄から取得したコード(折り返しバイト数の指定に関わるデフォルト引数の値のみ修正)
 #http://code.activestate.com/recipes/142812-hex-dumper/
@@ -137,5 +137,37 @@ def hexdump(src, length=16):
 		text = b''.join([x if 0x20 <= ord(x) < 0x7F else b'.' for x in s])
 		resulet.append(b"%04X   %-*s   %s" % (i, length*(digits + 1), hexa, text))
 	print b'\n'.join(result)
-	main()
+
+def receive_from(connection):
+	buffer = ""
+	#タイムアウト値を２秒に設定
+	connection.settimeout(2)
+
+	try:
+		#データを受け取らなくなるかタイムアウトになるまでデータを受信してbufferに格納
+		while True:
+			data = connection.recv(4096)
+
+			if not data:
+				break
+
+			buffer += data
+
+	except:
+		pass
+
+	return buffer
+
+#リモート側のホストに送る全リクエストデータの改変
+def request_handler(buffer):
+	#パケットの改変を実施
+	return buffer
+
+#ローカル側のホストに送る全リスポンスデータの改変
+def response_handler(buffer):
+	#パケットの改変を実施
+	return buffer
+
+
+main()
 
