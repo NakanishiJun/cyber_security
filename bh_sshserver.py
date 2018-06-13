@@ -33,7 +33,7 @@ try:
 	print '[+] Listening for connection ...'
 	client, addr = sock.accept()
 except Exception, e:
-	print '[-] Listen Failed: ' str(e)
+	print '[-] Listen Failed: ' + str(e)
 	sys.exit(1)
 
 print '[+] Got a connection'
