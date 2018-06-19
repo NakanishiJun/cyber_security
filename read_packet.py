@@ -4,20 +4,20 @@ import socket
 import os 
 
 #リッスンするホストのIPアドレス
-host = "192.168.0.100"
+host = "192.168.56.100"
 
 #rawソケットを作成し、パブリックなインターフェースにバインド
 if os.name == "nt":
-	socket_protocol = socket.IPPRONTO_IP
+	socket_protocol = socket.IPPROTO_IP
 else:
-	socket_protocol = socket.IPPRONTO_ICMP
+	socket_protocol = socket.IPPROTO_ICMP
 
 sniffer = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket_protocol)
 
 sniffer.bind((host, 0))
 
 #キャプチャー結果にIPヘッダーを含めるように指定
-sniffer.setsockopt(socket.IPPRONTO_IP, socket.IP_HDRINCL, 1)
+sniffer.setsockopt(socket.IPPROTO_IP, socket.IP_HDRINCL, 1)
 
 #Windowsの場合はioctlを使用して、プロミスキャスモードを有効化
 if os.name == "nt":
